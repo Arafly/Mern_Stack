@@ -58,3 +58,31 @@ added 1 package, and audited 52 packages in 1s
 found 0 vulnerabilities
 araflyayinde@cloudshell:~/todoly (arcane-splicer-308504)$
 ```
+
+## Backend Codes
+
+```
+const express = require ('express');
+const todoRoutes = express.todoRoutes();
+
+todoRoutes.get('/todos', (req, res, next) => {
+
+});
+
+todoRoutes.get('/:id', (req, res, next) => {
+    let id = req.params.id;
+    // Todo.findById(id, (err, todo)=> {
+    //     res.json(todo);
+    // });
+});
+
+todoRoutes.post('/todos', (req, res, next) => {
+
+});
+
+todoRoutes.delete('/todos/:id', (req, res, next) => {
+
+})
+
+module.exports = todoRoutes;
+```
