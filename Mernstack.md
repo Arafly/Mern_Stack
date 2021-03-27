@@ -1,37 +1,72 @@
-Create a virtual machine instance
-In the VM instances section, click the Create button.
+# MERN Stack on Ubuntu 20.04 
 
-Enter a name for this instance.
+The MERN stack is an acronym for MongoDB, Express, React / Redux, and Node.js. The MERN stack is one of the most popular JavaScript stacks for building modern single-page web applications (SPA).
 
-Choose a region and a zone for this instance.
+In this tutorial, we'll build a simple ToDo application that uses a RESTful API.
 
-In the Machine type menu, select micro, which specifies a lower-cost machine type. (Learn more about pricing.)
+### Prerequisites
+1. An Ubuntu VM (In this tutorial we're using an Ubuntu 20.04 on GCP VM Instance)\
+   
+> If you're interested in going the GCP route. This short tutorial would help get you started <https://cloud.google.com/compute/docs/instances/create-start-instance>
 
-In the Firewall selector section, select Allow HTTP traffic. This opens port 80 (HTTP) to access the app.
+This tutorial is broadly divided into 4 major categories
 
-Click Create to create the instance.
+1. Setting up the Backend
+2. Setting up MongoDB
+3. Hacking together the Frontend
+4. Tying everything together
 
-Open the Cloud Shell
-Open Cloud Shell by clicking the  Activate Cloud Shell button in the navigation bar in the upper-right corner of the console.
+## Initiating The Back-end Project
 
-Connect to the instance
-Connect to the VM using SSH. If this is your first time using SSH from Cloud Shell, you will need to create a private key. Enter the zone and name of the instance you created.
+The back-end will comprise HTTP endpoints to cover the following use cases:
 
-gcloud compute --project \
-    "arcane-splicer-308504" ssh \
-    --zone [vm-zone] [vm-name]
-Replace [vm-zone] and [vm-name] with the zone and name of the instance that you created.
+- Retrieve the complete list of available todo items by sending an HTTP **GET** request
+- ~~Retrieve a specific todo item by sending HTTP GET request and provide the specific todo ID in addtion~~
+- Create a new todo item in the database by sending an HTTP POST request
+- Update an existing todo item in the database by sending an HTTP POST request
+  
+Update ubuntu
 
-If this is your first time using SSH from Cloud Shell, follow the instructions to create a private key.
+`sudo apt update`
 
-It may take several minutes for the SSH key to propagate.
+Upgrade ubuntu
+
+`sudo apt upgrade`
+
+Lets get the location of Node.js software from Ubuntu repositories.
+
+`curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -`
+
+Install Node.js
+
+`sudo apt-get install -y nodejs`
+
+`~$ node --version`
 
 ```
-araflyayinde@mernstack:~$ node --version
+Output
 v12.21.0
-araflyayinde@mernstack:~$ npm -v
-6.14.11
+```
 
+`~$ npm -v`
+```
+Output
+6.14.11
+```
+
+### App Setup
+Create a new directory for the To-Do project, which we'd be naming "Todoly":
+
+`mkdir todoly`
+
+Enter into the newly created directory and initialize Node and npm into your project:
+
+`npm init -y`
+
+```
+Output:
+
+{
   "name": "todoly",
   "version": "1.0.0",
   "description": "A simple To-Do App",
@@ -47,54 +82,90 @@ araflyayinde@mernstack:~$ npm -v
   "author": "Molo",
   "license": "ISC"
 }
-araflyayinde@cloudshell:~/todoly (arcane-splicer-308504)$ npm install express
-added 50 packages, and audited 51 packages in 2s
-found 0 vulnerabilities
-
-araflyayinde@cloudshell:~/todoly (arcane-splicer-308504)$ ls
-index.js  node_modules  package.json  package-lock.json
-araflyayinde@cloudshell:~/todoly (arcane-splicer-308504)$ npm install dotenv
-added 1 package, and audited 52 packages in 1s
-found 0 vulnerabilities
-araflyayinde@cloudshell:~/todoly (arcane-splicer-308504)$
 ```
 
-## Backend Codes
+By running that npm command, a package.json will be automatically created. It stores up-to-date information about your project.
+
+With the package.json file available in the project folder we’re ready to add some dependencies to the project:
+
+`$ npm install express dotenv mongoose`
+
+Let’s take a quick look at some of the installed packages:
+
+- express: Express is a fast and lightweight web framework for Node.js. Express is an essential part of the MERN stack.
+- dotenv: an environment file to help store sensitive data concerning our project
+- mongoose: A Node.js framework which lets us access MongoDB in an object-oriented way.
+- 
+Finally we need to make sure to install a global package by executing the following command:
+
+`$ npm install -g nodemon`
+
+- Nodemon is a utility that will monitor for any changes in your source and automatically restart your server. We’ll use nodemon when running our Node.js server in the next steps.
+
+Inside of the todoly project folder enter into the index.js and insert the following basic Node.js / Express server implementation:
 
 ```
-const express = require ('express');
-const todoRoutes = express.todoRoutes();
+const express = require("express");
+require("dotenv").config();
 
-todoRoutes.get('/todos', (req, res, next) => {
+const app = express();
 
+const port = process.env.PORT || 5000;
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
 });
 
-todoRoutes.get('/:id', (req, res, next) => {
-    let id = req.params.id;
-    // Todo.findById(id, (err, todo)=> {
-    //     res.json(todo);
-    // });
+app.use((req, res, next) => {
+  res.send("Welcome to Express");
 });
 
-todoRoutes.post('/todos', (req, res, next) => {
-
+app.listen(port, () => {
+  console.log(`Keeping my eyes peeled on port ${port}`);
 });
 
-todoRoutes.delete('/todos/:id', (req, res, next) => {
-
-})
-
-module.exports = todoRoutes;
-
-Install nodemon. It is used to run and monitor the server. If there is any change in the server code, nodemon will restart it automatically and load the new changes.
-$ npm install nodemon --save-dev
-In Todo folder open the package.json file. Change the highlighted part of the below screenshot and replace with the code below.
-"scripts": {
-"start": "node index.js",
-"start-watch": "nodemon index.js",
-"dev": "concurrently \"npm run start-watch\" \"cd client && npm start\""
-},
 ```
+
+Hint: You can use the Editor feature in GCP, by clicking "Open Editor" in the cloud shell. Instead of using vi or nano on the terminal.
+*image
+
+With this code we’re creating an Express server and making the server listening on port 5000.
+
+Start the server by using nodemon:
+
+`$ nodemon index.js`
+
+```
+Output:
+
+~/todoly$ nodemon index.js
+[nodemon] 2.0.7
+[nodemon] to restart at any time, enter `rs`
+[nodemon] watching path(s): *.*
+[nodemon] watching extensions: js,mjs,json
+[nodemon] starting `node index.js`
+Keeping my eyes peeled on port 5000
+```
+
+Now open up inbound traffic on port 5000 for our VM. 
+Confused about how to do that? This article really helps <https://www.cloudsavvyit.com/4932/how-to-open-firewall-ports-on-a-gcp-compute-engine-instance/>
+
+## Mongo
+
+```
+araflyayinde@cloudshell:~/todoly$ node  index.js
+Keeping my eyes peeled on port 5000
+
+Database connected successfully
+```
+
+### Testing Backend Code without Frontend using RESTful API
+
 
 ## Frontend
 
