@@ -23,7 +23,7 @@ The back-end will comprise HTTP endpoints to cover the following use cases:
 - Create a new todo item in the database by sending an HTTP **POST** request
 - Retrieve the complete list of available todo items by sending an HTTP **GET** request
 - Delete an existing todo item in the database by sending an HTTP **DELETE** request
-  
+
 Update ubuntu
 
 `sudo apt update`
@@ -367,6 +367,12 @@ This request sends a new task to our To-Do list so the application could store i
 ! In my case, due to the more secured nature of the VM I'm on and also using POSTMAN client to try to access Google Cloud API’s. I had to generate a token so that I could authenticate to google cloud. This article here helped alot <https://pnatraj.medium.com/google-cloud-api-with-postman-f4cf070e665f>
 
 ![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Postrequest.PNG)
+
+Follow the same process but create a GET request to your API on http://<PublicIP-or-PublicDNS>:5000/api/todos. This request retrieves all existing records from out Todoly app.
+
+Also try the same for the DELETE request to delete a task from out To-Do list.
+Hint: You don't need to put a body parameter, you just  you need to send its ID as a part of DELETE request.
+http://<PublicIP-or-PublicDNS>:5000/api/todos/:id
 
 ## Hacking together the Frontend
 
