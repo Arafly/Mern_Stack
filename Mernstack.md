@@ -157,10 +157,15 @@ Keeping my eyes peeled on port 5000
 Now open up inbound traffic on port 5000 for our VM. 
 Confused about how to do that? This article really helps <https://www.cloudsavvyit.com/4932/how-to-open-firewall-ports-on-a-gcp-compute-engine-instance/>
 
+After following the process, you should end up with something like this:
+
+*image firewall
+
 After that is done, you can visit your <http://Public-IP:5000> or better still, since we're using the Cloud Shell on our VM, you can click on "web preview"
 
-*image web preview
-*image express.png
+1[](https://github.com/Arafly/Mern_Stack/blob/master/assets/webpreview.PNG)
+
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Express.PNG)
 
 Remember we said earlier that what we what our back-end to cover are these use cases:
 
@@ -268,8 +273,10 @@ First on the Network access tab you must allow access to the MongoDB database fr
 >IMPORTANT NOTE In the image below, make sure you change the time of deleting the entry from 6 Hours to 1 Week
 
 Next is to create a MongoDB database and collection inside mLab
-*image Mongo create db
-*image Mongo create db 2
+
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Mongo-create-DB-1.png)
+
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Mongo-create-DB-2.png)
 
 Additionally, add the connection string to access the database you just created from inside your app, just as below:
 
@@ -277,9 +284,11 @@ Additionally, add the connection string to access the database you just created 
 
 Ensure to update <username>, <password>, <network-address> and <database> according to your setup
 
-*image Mongo connect 1
-*image Mongo connect 2
-*image Mongo connect 3
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Mongo-connect1.png)
+
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Mongo-connect2.png)
+
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Mongo-connect3.png)
 
 Now we need to update the index.js to reflect the use of .env so that Node.js can connect to the database.
 
@@ -355,7 +364,9 @@ This request sends a new task to our To-Do list so the application could store i
 
 >Note: make sure your set header key Content-Type as application/json
 
-*images of Postman
+! In my case, due to the more secured nature of the VM I'm on and also using POSTMAN client to try to access Google Cloud API’s. I had to generate a token so that I could authenticate to google cloud. This article here helped alot <https://pnatraj.medium.com/google-cloud-api-with-postman-f4cf070e665f>
+
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Postrequest.PNG)
 
 ## Hacking together the Frontend
 
@@ -369,7 +380,7 @@ This will create a new folder in your Todo directory called *client*, where you 
 
 You'll end up with a project structure like this:
 
-*image project structure
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/projstructure.PNG)
 
 In Todo folder open the package.json file. Change the "start" code blockand replace with the code below.
 
@@ -401,7 +412,7 @@ Go to the client folder and enter into src, create a new foler name "components"
 
 Enter into components and create the three files -  Input.js, ListTodo.js and Todo.js.
 
-*image Components
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/Components.PNG)
 
 Next enter the Input.js file. Copy and paste the follwoing React code:
 
