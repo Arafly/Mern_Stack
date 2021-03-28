@@ -159,7 +159,7 @@ Confused about how to do that? This article really helps <https://www.cloudsavvy
 
 After following the process, you should end up with something like this:
 
-*image firewall
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/firewallrule.PNG)
 
 After that is done, you can visit your <http://Public-IP:5000> or better still, since we're using the Cloud Shell on our VM, you can click on "web preview"
 
