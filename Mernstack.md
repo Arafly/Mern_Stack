@@ -20,10 +20,9 @@ This tutorial is broadly divided into 4 major categories
 
 The back-end will comprise HTTP endpoints to cover the following use cases:
 
+- Create a new todo item in the database by sending an HTTP **POST** request
 - Retrieve the complete list of available todo items by sending an HTTP **GET** request
-- ~~Retrieve a specific todo item by sending HTTP GET request and provide the specific todo ID in addtion~~
-- Create a new todo item in the database by sending an HTTP POST request
-- Update an existing todo item in the database by sending an HTTP POST request
+- Delete an existing todo item in the database by sending an HTTP **DELETE** request
   
 Update ubuntu
 
@@ -155,103 +154,369 @@ Keeping my eyes peeled on port 5000
 Now open up inbound traffic on port 5000 for our VM. 
 Confused about how to do that? This article really helps <https://www.cloudsavvyit.com/4932/how-to-open-firewall-ports-on-a-gcp-compute-engine-instance/>
 
-## Mongo
+Remember we said erarlier that what we what our back-end to cover are these use cases:
+
+- Create a new todo item in the database by sending an HTTP **POST** request
+- Retrieve the complete list of available todo items by sending an HTTP **GET** request
+- Delete an existing todo item in the database by sending an HTTP **DELETE** request
+
+For each of these tasks, we need to create routes that will define various endpoints that the To-do app will depend on. So let us create a folder routes. You can decide to use the terminal or your editor (I'm using the Cloud Shell Editor in my case).
+
+In the *routes* folder, create a *backend.js* file and paste in the following codes:
 
 ```
+const express = require ('express');
+const router = express.Router();
+
+router.get('/todos', (req, res, next) => {
+
+});
+
+router.post('/todos', (req, res, next) => {
+
+});
+
+router.delete('/todos/:id', (req, res, next) => {
+
+})
+
+module.exports = router;
+```
+
+*image
+
+## Installing MongoDB
+
+Now that we’ve managed to set up a basic Node.js / Express server we’re ready to continue with the next task: setting up the MongoDB database.
+
+We'll define a *models* to define the database schema.
+
+Remember we installed "mongoose" earlier? This will help create a Schema and a model.
+
+Now, create a new folder named *models*. Inside the models folder, create a file and name it *todo.js*. Then paste the code below in the file:
+
+```
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+//create schema for todo
+const TodoSchema = new Schema({
+action: {
+type: String,
+required: [true, 'The todo text field is required']
+}
+})
+
+//create model for todo
+const Todo = mongoose.model('todo', TodoSchema);
+
+module.exports = Todo;
+```
+
+We've got to replace the placeholder code that we placed in our *backend.js* earlier. Replace everything in the backend.js file with the following code, so as to enable it fetch stuff from Mongo
+
+```
+const express = require ('express');
+const router = express.Router();
+const Todo = require('../models/todo');
+
+router.get('/todos', (req, res, next) => {
+
+//this will return all the data, exposing only the id and action field to the client
+Todo.find({}, 'action')
+.then(data => res.json(data))
+.catch(next)
+});
+
+router.post('/todos', (req, res, next) => {
+if(req.body.action){
+Todo.create(req.body)
+.then(data => res.json(data))
+.catch(next)
+}else {
+res.json({
+error: "The input field is empty"
+})
+}
+});
+
+router.delete('/todos/:id', (req, res, next) => {
+Todo.findOneAndDelete({"_id": req.params.id})
+.then(data => res.json(data))
+.catch(next)
+})
+
+module.exports = router;
+```
+
+At this point we need DB to be hosted somewhere, which is where **mLab** comes into the picture.
+mLab provides MongoDB database as a service solution (DBaaS).You will need to sign up for a shared clusters free account, which is ideal for our use case.
+- Sign up <https://www.mongodb.com/atlas-signup-from-mlab>
+- Follow the sign up process, - Select GCP as the cloud provider, and choose a region near you.
+  
+*image *image *image
+
+Now we need to update the index.js to reflect the use of .env so that Node.js can connect to the database.
+
+Simply delete existing content in the file, and update it with the entire code below.
+
+```
+const express = require("express");
+const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+const routes = require("./routes/api");
+const path = require("path");
+require("dotenv").config();
+
+const app = express();
+
+const port = process.env.PORT || 5000;
+
+//connect to the database
+mongoose
+  .connect(process.env.DB, { useNewUrlParser: true })
+  .then(() => console.log(`Database connected successfully`))
+  .catch((err) => console.log(err));
+
+//since mongoose promise is depreciated, we overide it with node's promise
+mongoose.Promise = global.Promise;
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
+
+app.use(bodyParser.json());
+
+app.use("/api", routes);
+
+app.use((err, req, res, next) => {
+  console.log(err);
+  next();
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
+```
+
+Start your server using the command:
+
+`node index.js`
+
+```
+Output:
+
 araflyayinde@cloudshell:~/todoly$ node  index.js
 Keeping my eyes peeled on port 5000
 
 Database connected successfully
 ```
 
-### Testing Backend Code without Frontend using RESTful API
+## Testing Backend Code without Frontend using RESTful API
+Even we've written the backend part of our To-Do application, and configured a database, we're left with the frontend, which we'll create with ReactJS. However, usually during development, we will need a way to test our code using RESTfulL API. Therefore, we will need to make use of some API development client to test our code.
 
+In this project, we will use Postman to test our API. Click Install Postman <https://www.getpostman.com/> to download and install postman on your machine (I'll be using the browser-enabled version of Postman).
 
-## Frontend
+You should test all the API endpoints and make sure they are working. For the endpoints that require body, we'd send JSON back with the necessary fields since it’s what we setup in our code.
+
+Now open your Postman, create a POST request to the API http://<PublicIP-or-PublicDNS>:5000/api/todos. 
+This request sends a new task to our To-Do list so the application could store it in the database.
+
+>Note: make sure your set header key Content-Type as application/json
+
+*images of Postman
+
+## Setting up Frontend
+
+It's time to create a UI to interact with the ToDO app via API. To start out with the frontend of the To-do app, we will use the *create-react-app* command to scaffold our app.
+
+In a terminal, which is the same root directory as your backend code, which is the *todoly* directory, run:
+
+`$ npx create-react-app client`
+
+This will create a new folder in your Todo directory called *client*, where you will add all the react code.
+
+In Todo folder open the package.json file. Change the "start" code blockand replace with the code below.
 
 ```
- npx create-react-app client
-
-
-cd client
-Open the package.json file
-vi package.json
-Add the key value pair in the package.json file "proxy": "http://localhost:5000".
-
-Move to the src folder
-
-cd ..
-Move to clients folder
-
-cd ..
-Install Axios
-
-$ npm install axios
-Go to ‘components’ directory
+"scripts": {
+"start": "node index.js",
+"start-watch": "nodemon index.js",
+"dev": "concurrently \"npm run start-watch\" \"cd client && npm start\""
+},
 ```
 
-```
-import React, {Component} from 'react';
-import axios from 'axios';
+Also, configure Proxy in package.json. Change directory to ‘client’. Open the package.json file and add the key value pair in the package.json file
 
-import Input from './Input';
-import ListTodo from './ListTodo';
+`"proxy": "http://localhost:5000"`
+
+The whole purpose of adding the proxy configuration is to make it possible to access the application directly from the browser by simply calling the server url like http://localhost:5000 rather than always including the entire path like http://localhost:5000/api/todos
+
+Now, ensure you are inside the Todo directory, and simply do:
+
+`npm run dev`
+
+Your app should open and start running on localhost:3000
+
+> Important note: In order to be able to access the application from the Internet you have to open TCP port 3000 on EC2 by adding a new Firewall rule.
+
+### Creating your React Components
+
+Go to the client folder and enter into src, create a new foler name "components".
+
+Enter into components and create the three files -  Input.js, ListTodo.js and Todo.js.
+
+*image screenshot
+
+Next pone the Input.js file. Copy and paste the follwoing React code:
+
+```
+import React, { Component } from "react";
+import axios from "axios";
+
+class Input extends Component {
+  state = {
+    action: "",
+  };
+
+  addTodo = () => {
+    const task = { action: this.state.action };
+
+    if (task.action && task.action.length > 0) {
+      axios
+        .post("/api/todos", task)
+        .then((res) => {
+          if (res.data) {
+            this.props.getTodos();
+            this.setState({ action: "" });
+          }
+        })
+        .catch((err) => console.log(err));
+    } else {
+      console.log("input field required");
+    }
+  };
+
+  handleChange = (e) => {
+    this.setState({
+      action: e.target.value,
+    });
+  };
+
+  render() {
+    let { action } = this.state;
+    return (
+      <div>
+        <input type="text" onChange={this.handleChange} value={action} />
+        <button onClick={this.addTodo}>add todo</button>
+      </div>
+    );
+  }
+}
+
+export default Input;
+
+```
+
+You must have noticed we defined 'axios' on Line 2. To make use of Axios, which is a Promise based HTTP client for the browser and node.js, you need to cd into your client from your terminal and run yarn add axios or npm install axios.
+
+Move to the src folder using your terminal.
+
+`$ npm install axios`
+
+Go to ListTodo.js in your components directory and also paste the following React code.
+
+```
+import React from "react";
+
+const ListTodo = ({ todos, deleteTodo }) => {
+  return (
+    <ul>
+      {todos && todos.length > 0 ? (
+        todos.map((todo) => {
+          return (
+            <li key={todo._id} onClick={() => deleteTodo(todo._id)}>
+              {todo.action}
+            </li>
+          );
+        })
+      ) : (
+        <li>No todo(s) left</li>
+      )}
+    </ul>
+  );
+};
+
+export default ListTodo;
+```
+
+Also do the same for your Todo.js and paste the following:
+
+```
+import React, { Component } from "react";
+import axios from "axios";
+
+import Input from "./Input";
+import ListTodo from "./ListTodo";
 
 class Todo extends Component {
+  state = {
+    todos: [],
+  };
 
-state = {
-todos: []
-}
+  componentDidMount() {
+    this.getTodos();
+  }
 
-componentDidMount(){
-this.getTodos();
-}
-
-getTodos = () => {
-axios.get('/api/todos')
-.then(res => {
-if(res.data){
-this.setState({
-todos: res.data
-})
-}
-})
-.catch(err => console.log(err))
-}
-
-deleteTodo = (id) => {
-
-    axios.delete(`/api/todos/${id}`)
-      .then(res => {
-        if(res.data){
-          this.getTodos()
+  getTodos = () => {
+    axios
+      .get("/api/todos")
+      .then((res) => {
+        if (res.data) {
+          this.setState({
+            todos: res.data,
+          });
         }
       })
-      .catch(err => console.log(err))
+      .catch((err) => console.log(err));
+  };
 
-}
+  deleteTodo = (id) => {
+    axios
+      .delete(`/api/todos/${id}`)
+      .then((res) => {
+        if (res.data) {
+          this.getTodos();
+        }
+      })
+      .catch((err) => console.log(err));
+  };
 
-render() {
-let { todos } = this.state;
+  render() {
+    let { todos } = this.state;
 
-    return(
+    return (
       <div>
         <h1>My Todo(s)</h1>
-        <Input getTodos={this.getTodos}/>
-        <ListTodo todos={todos} deleteTodo={this.deleteTodo}/>
+        <Input getTodos={this.getTodos} />
+        <ListTodo todos={todos} deleteTodo={this.deleteTodo} />
       </div>
-    )
-
-}
+    );
+  }
 }
 
 export default Todo;
 ```
 
-```
-vi App.js
-Copy and paste the code below into it
+Proceed to your App.js and paste in the following 
 
+```
 import React from 'react';
 
 import Todo from './components/Todo';
@@ -268,12 +533,9 @@ return (
 export default App;
 ```
 
+As well as in the src directory open the App.css and paste:
+
 ```
-In the src directory open the App.css
-
-vi App.css
-Then paste the following code into App.css:
-
 .App {
 text-align: center;
 font-size: calc(10px + 2vmin);
@@ -363,12 +625,9 @@ margin-top: 0;
 }
 ```
 
+Next is in the src directory open the index.css
+
 ```
-In the src directory open the index.css
-
-vim index.css
-Copy and paste the code below:
-
 body {
 margin: 0;
 padding: 0;
@@ -387,3 +646,15 @@ font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
 monospace;
 }
 ```
+
+Using your terminal now. Return to the todoly directory
+
+`cd ../..`
+
+When you are in the Todo directory run:
+
+`npm run dev`
+
+If all went well when saving all these files, our Todoly app should be ready and fully functional with the functionality discussed earlier: creating a task, deleting a task and viewing all your tasks, integrated.
+
+*iamge of end result
