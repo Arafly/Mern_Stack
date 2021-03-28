@@ -11,8 +11,8 @@ In this tutorial, we'll build a simple ToDo application that uses a RESTful API.
 
 This tutorial is broadly divided into 4 major categories
 
-1. Setting up the Backend
-2. Setting up MongoDB
+1. Initiating up the Backend
+2. Installing MongoDB
 3. Hacking together the Frontend
 4. Tying everything together
 
@@ -43,13 +43,15 @@ Install Node.js
 `~$ node --version`
 
 ```
-Output
+Output:
+
 v12.21.0
 ```
 
 `~$ npm -v`
 ```
-Output
+Output:
+
 6.14.11
 ```
 
@@ -101,6 +103,10 @@ Finally we need to make sure to install a global package by executing the follow
 
 - Nodemon is a utility that will monitor for any changes in your source and automatically restart your server. We’ll use nodemon when running our Node.js server in the next steps.
 
+>Hint: You can use the Editor feature in GCP, by clicking "Open Editor" in the cloud shell. Instead of using vi or nano on the terminal.
+
+![](https://github.com/Arafly/Mern_Stack/blob/master/assets/editor.PNG)
+
 Inside of the todoly project folder enter into the index.js and insert the following basic Node.js / Express server implementation:
 
 ```
@@ -130,9 +136,6 @@ app.listen(port, () => {
 
 ```
 
-Hint: You can use the Editor feature in GCP, by clicking "Open Editor" in the cloud shell. Instead of using vi or nano on the terminal.
-*image
-
 With this code we’re creating an Express server and making the server listening on port 5000.
 
 Start the server by using nodemon:
@@ -154,7 +157,12 @@ Keeping my eyes peeled on port 5000
 Now open up inbound traffic on port 5000 for our VM. 
 Confused about how to do that? This article really helps <https://www.cloudsavvyit.com/4932/how-to-open-firewall-ports-on-a-gcp-compute-engine-instance/>
 
-Remember we said erarlier that what we what our back-end to cover are these use cases:
+After that is done, you can visit your <http://Public-IP:5000> or better still, since we're using the Cloud Shell on our VM, you can click on "web preview"
+
+*image web preview
+*image express.png
+
+Remember we said earlier that what we what our back-end to cover are these use cases:
 
 - Create a new todo item in the database by sending an HTTP **POST** request
 - Retrieve the complete list of available todo items by sending an HTTP **GET** request
@@ -182,8 +190,6 @@ router.delete('/todos/:id', (req, res, next) => {
 
 module.exports = router;
 ```
-
-*image
 
 ## Installing MongoDB
 
@@ -216,45 +222,64 @@ module.exports = Todo;
 We've got to replace the placeholder code that we placed in our *backend.js* earlier. Replace everything in the backend.js file with the following code, so as to enable it fetch stuff from Mongo
 
 ```
-const express = require ('express');
+const express = require("express");
 const router = express.Router();
-const Todo = require('../models/todo');
+const Todo = require("../models/todo");
 
-router.get('/todos', (req, res, next) => {
-
-//this will return all the data, exposing only the id and action field to the client
-Todo.find({}, 'action')
-.then(data => res.json(data))
-.catch(next)
+router.get("/todos", (req, res, next) => {
+  //this will return all the data, exposing only the id and action field to the client
+  Todo.find({}, "action")
+    .then((data) => res.json(data))
+    .catch(next);
 });
 
-router.post('/todos', (req, res, next) => {
-if(req.body.action){
-Todo.create(req.body)
-.then(data => res.json(data))
-.catch(next)
-}else {
-res.json({
-error: "The input field is empty"
-})
-}
+router.post("/todos", (req, res, next) => {
+  if (req.body.action) {
+    Todo.create(req.body)
+      .then((data) => res.json(data))
+      .catch(next);
+  } else {
+    res.json({
+      error: "The input field is empty",
+    });
+  }
 });
 
-router.delete('/todos/:id', (req, res, next) => {
-Todo.findOneAndDelete({"_id": req.params.id})
-.then(data => res.json(data))
-.catch(next)
-})
+router.delete("/todos/:id", (req, res, next) => {
+  Todo.findOneAndDelete({ _id: req.params.id })
+    .then((data) => res.json(data))
+    .catch(next);
+});
 
 module.exports = router;
+
 ```
 
 At this point we need DB to be hosted somewhere, which is where **mLab** comes into the picture.
 mLab provides MongoDB database as a service solution (DBaaS).You will need to sign up for a shared clusters free account, which is ideal for our use case.
+
 - Sign up <https://www.mongodb.com/atlas-signup-from-mlab>
 - Follow the sign up process, - Select GCP as the cloud provider, and choose a region near you.
-  
-*image *image *image
+
+There are a few things you must do to allow you connect to your hosted DB on mLab.
+First on the Network access tab you must allow access to the MongoDB database from anywhere 
+*image Mongo network access
+
+>IMPORTANT NOTE In the image below, make sure you change the time of deleting the entry from 6 Hours to 1 Week
+
+Next is to create a MongoDB database and collection inside mLab
+*image Mongo create db
+*image Mongo create db 2
+
+Additionally, add the connection string to access the database you just created from inside your app, just as below:
+
+`DB = 'mongodb+srv://<username>:<password>@<network-address>/<dbname>?retryWrites=true&w=majority'`
+
+Ensure to update <username>, <password>, <network-address> and <database> according to your setup
+
+*image Mongo connect 1
+*image Mongo connect 2
+*image Mongo connect 3
 
 Now we need to update the index.js to reflect the use of .env so that Node.js can connect to the database.
 
@@ -332,7 +357,7 @@ This request sends a new task to our To-Do list so the application could store i
 
 *images of Postman
 
-## Setting up Frontend
+## Hacking together the Frontend
 
 It's time to create a UI to interact with the ToDO app via API. To start out with the frontend of the To-do app, we will use the *create-react-app* command to scaffold our app.
 
@@ -341,6 +366,10 @@ In a terminal, which is the same root directory as your backend code, which is t
 `$ npx create-react-app client`
 
 This will create a new folder in your Todo directory called *client*, where you will add all the react code.
+
+You'll end up with a project structure like this:
+
+*image project structure
 
 In Todo folder open the package.json file. Change the "start" code blockand replace with the code below.
 
@@ -372,9 +401,9 @@ Go to the client folder and enter into src, create a new foler name "components"
 
 Enter into components and create the three files -  Input.js, ListTodo.js and Todo.js.
 
-*image screenshot
+*image Components
 
-Next pone the Input.js file. Copy and paste the follwoing React code:
+Next enter the Input.js file. Copy and paste the follwoing React code:
 
 ```
 import React, { Component } from "react";
@@ -424,7 +453,11 @@ export default Input;
 
 ```
 
-You must have noticed we defined 'axios' on Line 2. To make use of Axios, which is a Promise based HTTP client for the browser and node.js, you need to cd into your client from your terminal and run yarn add axios or npm install axios.
+You must have noticed we defined 'axios' on Line 2.
+
+`import axios from "axios";`
+
+To make use of Axios, which is a Promise based HTTP client for the browser and node.js, you need to cd into your client from your terminal and run yarn add axios or npm install axios.
 
 Move to the src folder using your terminal.
 
@@ -517,20 +550,21 @@ export default Todo;
 Proceed to your App.js and paste in the following 
 
 ```
-import React from 'react';
+import React from "react";
 
-import Todo from './components/Todo';
-import './App.css';
+import Todo from "./components/Todo";
+import "./App.css";
 
 const App = () => {
-return (
-<div className="App">
-<Todo />
-</div>
-);
-}
+  return (
+    <div className="App">
+      <Todo />
+    </div>
+  );
+};
 
 export default App;
+
 ```
 
 As well as in the src directory open the App.css and paste:
@@ -656,5 +690,3 @@ When you are in the Todo directory run:
 `npm run dev`
 
 If all went well when saving all these files, our Todoly app should be ready and fully functional with the functionality discussed earlier: creating a task, deleting a task and viewing all your tasks, integrated.
-
-*iamge of end result
